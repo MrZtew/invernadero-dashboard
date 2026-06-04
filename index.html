@@ -55,6 +55,14 @@
       letter-spacing: -0.02em;
     }
     header h1 i { color: var(--accent); margin-right: 8px; }
+    .header-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
 
     /* ---- Indicador de conexión ---- */
     .connection-status {
@@ -86,7 +94,6 @@
 
     /* ---- Botón de ajustes ---- */
     .settings-toggle {
-      margin-left: 8px;
       padding: 8px 12px;
       border: none;
       border-radius: 10px;
@@ -211,7 +218,6 @@
 
     /* ---- Botón de simulación ---- */
     .sim-toggle {
-      margin-top: 12px;
       padding: 8px 20px;
       border: none;
       border-radius: 10px;
@@ -374,12 +380,14 @@
     <!-- Header -->
     <header>
       <h1><i class="fas fa-microchip"></i>Monitor de Riego</h1>
-      <div class="connection-status" id="connectionStatus">
-        <span class="dot disconnected" id="connectionDot"></span>
-        <span id="connectionText">Desconectado</span>
+      <div class="header-controls">
+        <div class="connection-status" id="connectionStatus">
+          <span class="dot disconnected" id="connectionDot"></span>
+          <span id="connectionText">Desconectado</span>
+        </div>
+        <button class="sim-toggle off" id="simBtn"><i class="fas fa-play"></i> Simular ESP</button>
+        <button class="settings-toggle" id="settingsToggle"><i class="fas fa-cog"></i> Ajustes</button>
       </div>
-      <button class="sim-toggle off" id="simBtn"><i class="fas fa-play"></i> Simular ESP</button>
-      <button class="settings-toggle" id="settingsToggle"><i class="fas fa-cog"></i> Ajustes</button>
     </header>
 
     <!-- Panel de ajustes -->
