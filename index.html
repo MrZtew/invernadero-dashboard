@@ -198,6 +198,45 @@
       gap: 6px;
     }
     .csv-btn:hover { background: rgba(59,130,246,0.15); }
+    .csv-filters {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .csv-dates { display:flex;gap:10px;flex-wrap:wrap; }
+    .csv-dates label {
+      display:flex;align-items:center;gap:4px;
+      font-size:0.8rem;color:var(--text-secondary);
+    }
+    .csv-dates input {
+      background: rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:6px;
+      padding:4px 8px;
+      color:var(--text-primary);
+      font-family:inherit;
+      font-size:0.8rem;
+    }
+    .csv-dates input:focus { outline:none;border-color:var(--accent); }
+    .csv-topics { display:flex;flex-wrap:wrap;gap:6px; }
+    .csv-topics label {
+      display:flex;align-items:center;gap:3px;
+      font-size:0.75rem;color:var(--text-secondary);
+      cursor:pointer;
+      padding:3px 8px;
+      border-radius:6px;
+      background: rgba(255,255,255,0.04);
+      transition:background 0.2s;
+      user-select:none;
+    }
+    .csv-topics label:hover { background: rgba(255,255,255,0.08); }
+    .csv-topics input { accent-color:var(--accent); }
     .chart-wrapper {
       position: relative;
       width: 100%;
@@ -268,10 +307,18 @@
 
     <!-- Sección de gráfica histórica -->
     <div class="chart-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
-        <h2 style="margin:0;"><i class="fas fa-chart-line"></i>Histórico de Sensores</h2>
+      <h2 style="margin:0 0 12px 0;"><i class="fas fa-chart-line"></i>Histórico de Sensores</h2>
+
+      <!-- Filtros y exportación -->
+      <div class="csv-filters">
+        <div class="csv-dates">
+          <label>Desde: <input type="date" id="csvFrom"></label>
+          <label>Hasta: <input type="date" id="csvTo"></label>
+        </div>
+        <div class="csv-topics" id="csvTopics"></div>
         <button id="csvBtn" class="csv-btn"><i class="fas fa-download"></i> Descargar CSV</button>
       </div>
+
       <div class="chart-wrapper">
         <canvas id="sensorChart"></canvas>
       </div>
@@ -588,32 +635,63 @@
       luzText.className = "state-text " + (esDia ? "on" : "off");
     }
 
-    // ---- Exportar CSV con todos los datos de IndexedDB ----
+    // ---- Filtros de CSV: inicializar checkboxes de tópicos y fechas ----
+    (function initCSVFilters() {
+      const container = document.getElementById("csvTopics");
+      TOPICS.forEach(t => {
+        const label = document.createElement("label");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = true;
+        cb.value = t;
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(t.split("/").pop()));
+        container.appendChild(label);
+      });
+      const hoy = new Date();
+      document.getElementById("csvFrom").value = new Date(hoy.getTime() - 7*86400000).toISOString().slice(0,10);
+      document.getElementById("csvTo").value = hoy.toISOString().slice(0,10);
+    })();
+
+    // ---- Exportar CSV con filtros ----
     document.getElementById("csvBtn").addEventListener("click", async () => {
-      if (!db) { alert("No hay datos todavía."); return; }
+      if (!db) { alert("Base de datos no lista."); return; }
+
+      const desde = new Date(document.getElementById("csvFrom").value);
+      const hasta = new Date(document.getElementById("csvTo").value + "T23:59:59");
+      const topicsSel = [...document.querySelectorAll("#csvTopics input:checked")].map(cb => cb.value);
+      if (topicsSel.length === 0) { alert("Selecciona al menos un tópico."); return; }
+
       const tx = db.transaction(STORE_NAME, "readonly");
       const store = tx.objectStore(STORE_NAME);
+      const index = store.index("timestamp");
+      const range = IDBKeyRange.bound(desde.getTime(), hasta.getTime());
       const all = [];
+
       await new Promise((resolve) => {
-        store.openCursor().onsuccess = (e) => {
+        index.openCursor(range).onsuccess = (e) => {
           const c = e.target.result;
-          if (c) { all.push(c.value); c.continue(); }
-          else resolve();
+          if (c) {
+            if (topicsSel.includes(c.value.topic)) all.push(c.value);
+            c.continue();
+          } else resolve();
         };
       });
-      if (all.length === 0) { alert("No hay datos registrados."); return; }
-      const header = "timestamp,fecha,topic,valor";
+
+      if (all.length === 0) { alert("No hay datos en ese rango."); return; }
+
+      const header = "timestamp;fecha;topico;valor";
       const rows = all.map(r => {
         const t = new Date(r.timestamp);
         const fecha = t.toLocaleString("es-ES");
-        return `${r.timestamp},${fecha},${r.topic},${r.value}`;
+        return `${r.timestamp};${fecha};${r.topic};${r.value}`;
       });
       const bom = "\uFEFF";
       const blob = new Blob([bom + header + "\n" + rows.join("\n")], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `invernadero_${new Date().toISOString().slice(0,10)}.csv`;
+      a.download = `invernadero_${document.getElementById("csvFrom").value}_${document.getElementById("csvTo").value}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     });
