@@ -443,7 +443,10 @@
     // --- Procesar datos de sensores (usado por MQTT real y simulador) ---
     function procesarDato(topic, raw) {
       let payload = raw;
-      try { const j = JSON.parse(raw); payload = String(j.value ?? Object.values(j)[0]); } catch (_) {}
+      try {
+        const j = JSON.parse(raw);
+        if (typeof j === "object" && j !== null) payload = String(j.value ?? Object.values(j)[0]);
+      } catch (_) {}
       console.log(`[${topic}] ${raw} → ${payload}`);
 
       switch (topic) {
