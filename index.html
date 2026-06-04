@@ -182,6 +182,22 @@
       gap: 8px;
     }
     .chart-section h2 i { color: var(--accent); }
+    .csv-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .csv-btn:hover { background: rgba(59,130,246,0.15); }
     .chart-wrapper {
       position: relative;
       width: 100%;
@@ -252,7 +268,10 @@
 
     <!-- Sección de gráfica histórica -->
     <div class="chart-section">
-      <h2><i class="fas fa-chart-line"></i>Histórico de Sensores</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+        <h2 style="margin:0;"><i class="fas fa-chart-line"></i>Histórico de Sensores</h2>
+        <button id="csvBtn" class="csv-btn"><i class="fas fa-download"></i> Descargar CSV</button>
+      </div>
       <div class="chart-wrapper">
         <canvas id="sensorChart"></canvas>
       </div>
@@ -568,6 +587,36 @@
       luzText.textContent = esDia ? "Día" : "Noche";
       luzText.className = "state-text " + (esDia ? "on" : "off");
     }
+
+    // ---- Exportar CSV con todos los datos de IndexedDB ----
+    document.getElementById("csvBtn").addEventListener("click", async () => {
+      if (!db) { alert("No hay datos todavía."); return; }
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const store = tx.objectStore(STORE_NAME);
+      const all = [];
+      await new Promise((resolve) => {
+        store.openCursor().onsuccess = (e) => {
+          const c = e.target.result;
+          if (c) { all.push(c.value); c.continue(); }
+          else resolve();
+        };
+      });
+      if (all.length === 0) { alert("No hay datos registrados."); return; }
+      const header = "timestamp,fecha,topic,valor";
+      const rows = all.map(r => {
+        const t = new Date(r.timestamp);
+        const fecha = t.toLocaleString("es-ES");
+        return `${r.timestamp},${fecha},${r.topic},${r.value}`;
+      });
+      const bom = "\uFEFF";
+      const blob = new Blob([bom + header + "\n" + rows.join("\n")], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invernadero_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
 
     // ---- Iniciar conexión ----
     openDB();
