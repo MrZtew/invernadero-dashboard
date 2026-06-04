@@ -84,6 +84,131 @@
       box-shadow: 0 0 8px var(--red);
     }
 
+    /* ---- Botón de ajustes ---- */
+    .settings-toggle {
+      margin-left: 8px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-secondary);
+    }
+    .settings-toggle:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+    .settings-toggle.active { background: var(--accent); color: #fff; }
+
+    /* ---- Panel de ajustes ---- */
+    .settings-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      display: none;
+    }
+    .settings-panel.open { display: block; }
+    .settings-panel h3 {
+      font-size: 1rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .settings-panel h3 i { color: var(--accent); }
+    .settings-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 500px) {
+      .settings-group { grid-template-columns: 1fr; }
+    }
+    .settings-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .settings-field label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+    .settings-field input {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.85rem;
+      transition: border-color 0.2s;
+    }
+    .settings-field input:focus { outline: none; border-color: var(--accent); }
+    .settings-topics {
+      margin-bottom: 16px;
+    }
+    .settings-topics .topic-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .settings-topics .topic-row input {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.85rem;
+    }
+    .settings-topics .topic-row input:focus { outline: none; border-color: var(--accent); }
+    .settings-topics .topic-del {
+      background: none;
+      border: none;
+      color: var(--red);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+    }
+    .settings-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .settings-actions button {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .settings-actions .btn-save {
+      background: var(--accent);
+      color: #fff;
+    }
+    .settings-actions .btn-save:hover { background: #2563eb; }
+    .settings-actions .btn-add-topic {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-secondary);
+    }
+    .settings-actions .btn-add-topic:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+
     /* ---- Botón de simulación ---- */
     .sim-toggle {
       margin-top: 12px;
@@ -254,7 +379,38 @@
         <span id="connectionText">Desconectado</span>
       </div>
       <button class="sim-toggle off" id="simBtn"><i class="fas fa-play"></i> Simular ESP</button>
+      <button class="settings-toggle" id="settingsToggle"><i class="fas fa-cog"></i> Ajustes</button>
     </header>
+
+    <!-- Panel de ajustes -->
+    <div class="settings-panel" id="settingsPanel">
+      <h3><i class="fas fa-sliders-h"></i>Configuración de conexión</h3>
+      <div class="settings-group">
+        <div class="settings-field">
+          <label>Host MQTT</label>
+          <input id="cfgHost" placeholder="ej: a1b2c3.s1.eu.hivemq.cloud">
+        </div>
+        <div class="settings-field">
+          <label>Puerto (SSL)</label>
+          <input id="cfgPort" placeholder="8884">
+        </div>
+        <div class="settings-field">
+          <label>Usuario</label>
+          <input id="cfgUser" placeholder="Usuario MQTT">
+        </div>
+        <div class="settings-field">
+          <label>Contraseña</label>
+          <input id="cfgPass" type="password" placeholder="Contraseña">
+        </div>
+      </div>
+      <div class="settings-topics" id="settingsTopics">
+        <label style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-secondary);display:block;margin-bottom:8px;">Tópicos</label>
+      </div>
+      <div class="settings-actions">
+        <button class="btn-add-topic" id="addTopicBtn"><i class="fas fa-plus"></i> Añadir tópico</button>
+        <button class="btn-save" id="saveSettingsBtn"><i class="fas fa-save"></i> Guardar y reconectar</button>
+      </div>
+    </div>
 
     <!-- Grid de tarjetas -->
     <div class="cards-grid">
@@ -344,20 +500,42 @@
       }
     });
 
-    // ---- Configuración MQTT (HiveMQ Cloud) ----
-    const MQTT_HOST = "aadfec39d82e4788bfbebcbf3bfde060.s1.eu.hivemq.cloud";
-    const MQTT_PORT = 8884;
-    const MQTT_USER = "INVERNADERO_WEB";
-    const MQTT_PASS = "Invernadero123*";
+    // ---- Configuración persistente (localStorage) ----
+    const STORAGE_KEY = "invernadero_cfg";
     const CLIENT_ID = "web_dashboard_" + Math.random().toString(36).substring(2, 10);
-    const TOPICS = [
-      "invernadero/humedad_amb",
-      "invernadero/temperatura",
-      "invernadero/ventilador",
-      "invernadero/bomba",
-      "invernadero/bombilla",
-      "invernadero/humedad_suelo"
-    ];
+
+    const DEFAULTS = {
+      host: "aadfec39d82e4788bfbebcbf3bfde060.s1.eu.hivemq.cloud",
+      port: "8884",
+      user: "INVERNADERO_WEB",
+      pass: "Invernadero123*",
+      topics: [
+        "invernadero/humedad_amb",
+        "invernadero/temperatura",
+        "invernadero/ventilador",
+        "invernadero/bomba",
+        "invernadero/bombilla",
+        "invernadero/humedad_suelo"
+      ]
+    };
+
+    function loadCfg() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : { ...DEFAULTS };
+      } catch { return { ...DEFAULTS }; }
+    }
+
+    function saveCfg(cfg) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+    }
+
+    let CFG = loadCfg();
+    let MQTT_HOST = CFG.host;
+    let MQTT_PORT = parseInt(CFG.port);
+    let MQTT_USER = CFG.user;
+    let MQTT_PASS = CFG.pass;
+    let TOPICS = [...CFG.topics];
 
     // ---- Elementos del DOM ----
     const connDot = document.getElementById("connectionDot");
@@ -419,9 +597,12 @@
     let sensorChart = null;
 
     async function updateChart() {
-      const humData = await getReadings("invernadero/humedad_amb");
-      const tempData = await getReadings("invernadero/temperatura");
-      const soilData = await getReadings("invernadero/humedad_suelo");
+      const humTopic = TOPICS.find(t => t.endsWith("humedad_amb")) || "invernadero/humedad_amb";
+      const tempTopic = TOPICS.find(t => t.endsWith("temperatura")) || "invernadero/temperatura";
+      const soilTopic = TOPICS.find(t => t.endsWith("humedad_suelo")) || "invernadero/humedad_suelo";
+      const humData = await getReadings(humTopic);
+      const tempData = await getReadings(tempTopic);
+      const soilData = await getReadings(soilTopic);
 
       if (humData.length === 0 && tempData.length === 0 && soilData.length === 0) return;
 
@@ -515,31 +696,32 @@
       } catch (_) {}
       console.log(`[${topic}] ${raw} → ${payload}`);
 
-      switch (topic) {
-        case "invernadero/humedad_amb":
-          humidityEl.innerHTML = `${parseFloat(payload).toFixed(1)}<span class="unit">%</span>`;
-          saveReading(topic, payload);
-          updateChart();
-          break;
-        case "invernadero/temperatura":
+      const key = topic.split("/").pop();
+      switch (key) {
+        case "temperatura":
           temperatureEl.innerHTML = `${parseFloat(payload).toFixed(1)}<span class="unit">°C</span>`;
           saveReading(topic, payload);
           updateChart();
           break;
-        case "invernadero/ventilador":
-          updateMotorUI(ventIcon, ventText, payload);
-          break;
-        case "invernadero/bomba":
-          updateMotorUI(sumpIcon, sumpText, payload);
-          break;
-        case "invernadero/bombilla":
-          updateLuzUI(payload);
+        case "humedad_amb":
+          humidityEl.innerHTML = `${parseFloat(payload).toFixed(1)}<span class="unit">%</span>`;
           saveReading(topic, payload);
+          updateChart();
           break;
-        case "invernadero/humedad_suelo":
+        case "humedad_suelo":
           soilHumidityEl.innerHTML = `${parseFloat(payload).toFixed(1)}<span class="unit">%</span>`;
           saveReading(topic, payload);
           updateChart();
+          break;
+        case "bombilla":
+          updateLuzUI(payload);
+          saveReading(topic, payload);
+          break;
+        case "ventilador":
+          updateMotorUI(ventIcon, ventText, payload);
+          break;
+        case "bomba":
+          updateMotorUI(sumpIcon, sumpText, payload);
           break;
       }
     }
@@ -549,19 +731,20 @@
     }
 
     function simularDatos() {
-      const hora = new Date().getHours();
-      const esDiurno = hora >= 6 && hora < 20;
+      const ahora = new Date();
+      const esDiurno = ahora.getHours() >= 6 && ahora.getHours() < 20;
       const temp = (20 + Math.random() * 10).toFixed(1);
       const hum = (55 + Math.random() * 30).toFixed(1);
       const luz = esDiurno ? "1" : "0";
       const vent = Math.random() > 0.5 ? "ON" : "OFF";
       const bomba = Math.random() > 0.7 ? "ON" : "OFF";
-      injectData("invernadero/humedad_amb", hum);
-      injectData("invernadero/temperatura", temp);
-      injectData("invernadero/bombilla", luz);
-      injectData("invernadero/humedad_suelo", (40 + Math.random() * 40).toFixed(1));
-      injectData("invernadero/ventilador", vent);
-      injectData("invernadero/bomba", bomba);
+      const t = (suf) => TOPICS.find(t => t.endsWith(suf)) || "invernadero/" + suf;
+      injectData(t("humedad_amb"), hum);
+      injectData(t("temperatura"), temp);
+      injectData(t("bombilla"), luz);
+      injectData(t("humedad_suelo"), (40 + Math.random() * 40).toFixed(1));
+      injectData(t("ventilador"), vent);
+      injectData(t("bomba"), bomba);
     }
 
     // ---- Cliente MQTT (con fallback si Paho no cargó) ----
@@ -694,6 +877,135 @@
       a.download = `invernadero_${document.getElementById("csvFrom").value}_${document.getElementById("csvTo").value}.csv`;
       a.click();
       URL.revokeObjectURL(url);
+    });
+
+    // ---- Panel de ajustes ----
+    const settingsToggle = document.getElementById("settingsToggle");
+    const settingsPanel = document.getElementById("settingsPanel");
+    settingsToggle.addEventListener("click", () => {
+      settingsPanel.classList.toggle("open");
+      settingsToggle.classList.toggle("active");
+      if (settingsPanel.classList.contains("open")) {
+        renderSettingsForm();
+      }
+    });
+
+    function renderSettingsForm() {
+      const cfg = loadCfg();
+      document.getElementById("cfgHost").value = cfg.host;
+      document.getElementById("cfgPort").value = cfg.port;
+      document.getElementById("cfgUser").value = cfg.user;
+      document.getElementById("cfgPass").value = cfg.pass;
+      renderTopicInputs(cfg.topics);
+    }
+
+    function renderTopicInputs(topics) {
+      const container = document.getElementById("settingsTopics");
+      const label = container.querySelector("label");
+      container.innerHTML = "";
+      if (label) container.appendChild(label);
+      topics.forEach((t, i) => {
+        const row = document.createElement("div");
+        row.className = "topic-row";
+        const input = document.createElement("input");
+        input.value = t;
+        input.dataset.index = i;
+        input.placeholder = "invernadero/topico";
+        const delBtn = document.createElement("button");
+        delBtn.className = "topic-del";
+        delBtn.innerHTML = '<i class="fas fa-times"></i>';
+        delBtn.addEventListener("click", () => {
+          const inputs = container.querySelectorAll(".topic-row input");
+          if (inputs.length <= 1) return;
+          row.remove();
+        });
+        row.appendChild(input);
+        row.appendChild(delBtn);
+        container.appendChild(row);
+      });
+    }
+
+    document.getElementById("addTopicBtn").addEventListener("click", () => {
+      const container = document.getElementById("settingsTopics");
+      const row = document.createElement("div");
+      row.className = "topic-row";
+      const input = document.createElement("input");
+      input.value = "";
+      input.placeholder = "invernadero/nuevo_topico";
+      const delBtn = document.createElement("button");
+      delBtn.className = "topic-del";
+      delBtn.innerHTML = '<i class="fas fa-times"></i>';
+      delBtn.addEventListener("click", () => {
+        const inputs = container.querySelectorAll(".topic-row input");
+        if (inputs.length <= 1) return;
+        row.remove();
+      });
+      row.appendChild(input);
+      row.appendChild(delBtn);
+      container.appendChild(row);
+      input.focus();
+    });
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+      const topics = [...document.querySelectorAll("#settingsTopics .topic-row input")]
+        .map(i => i.value.trim())
+        .filter(Boolean);
+      if (topics.length === 0) { alert("Debe haber al menos un tópico."); return; }
+
+      const newCfg = {
+        host: document.getElementById("cfgHost").value.trim(),
+        port: document.getElementById("cfgPort").value.trim(),
+        user: document.getElementById("cfgUser").value.trim(),
+        pass: document.getElementById("cfgPass").value,
+        topics
+      };
+      if (!newCfg.host) { alert("El host es obligatorio."); return; }
+      if (!newCfg.port) { alert("El puerto es obligatorio."); return; }
+
+      saveCfg(newCfg);
+      CFG = newCfg;
+      MQTT_HOST = newCfg.host;
+      MQTT_PORT = parseInt(newCfg.port);
+      MQTT_USER = newCfg.user;
+      MQTT_PASS = newCfg.pass;
+      TOPICS = [...newCfg.topics];
+
+      // Reconstruir checkboxes de CSV
+      const csvContainer = document.getElementById("csvTopics");
+      csvContainer.innerHTML = "";
+      TOPICS.forEach(t => {
+        const label = document.createElement("label");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = true;
+        cb.value = t;
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(t.split("/").pop()));
+        csvContainer.appendChild(label);
+      });
+
+      // Reconectar MQTT
+      if (client) {
+        try { client.disconnect(); } catch (_) {}
+      }
+      try {
+        if (typeof Paho !== "undefined") {
+          client = new Paho.MQTT.Client(MQTT_HOST, MQTT_PORT, CLIENT_ID);
+          client.onConnectionLost = (response) => {
+            updateConnectionStatus(false);
+            setTimeout(() => { connectToBroker(); }, 3000);
+          };
+          client.onMessageArrived = (message) => {
+            procesarDato(message.destinationName, message.payloadString);
+          };
+        }
+      } catch (e) {
+        console.warn("Paho MQTT no disponible:", e);
+      }
+      connectToBroker();
+
+      settingsPanel.classList.remove("open");
+      settingsToggle.classList.remove("active");
     });
 
     // ---- Iniciar conexión ----
